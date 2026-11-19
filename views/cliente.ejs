@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>clientes — SSR Relacional</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; margin: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .actions { margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #007bff; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .btn { padding: 8px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; color: white; display: inline-block; }
+        .btn-green { background-color: #28a745; }
+        .btn-purple { background-color: #6f42c1; }
+        .btn-blue { background-color: #17a2b8; }
+        .btn-red { background-color: #dc3545; }
+        .badge-grupo { background: #e9ecef; color: #495057; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .search-box input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 220px; }
+        .search-box button { padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO COM INFORMAÇÕES DA SESSÃO DO USUÁRIO -->
+    <div class="header">
+        <h2>Painel de clientes & Relacionamentos</h2>
+        <div>
+            <!-- BLOCO EJS: Imprime o nome do usuário logado armazenado em req.session.usuario -->
+            <span>Bem-vindo, <strong><%= usuario.nome %></strong>!</span> | 
+            <a href="/logout" style="color: #dc3545; text-decoration: none;">Sair</a>
+        </div>
+    </div>
+
+    <!-- BARRA DE AÇÕES: LINKS DE CADASTRO E BUSCA -->
+    <div class="actions">
+        <div>
+            <a href="/clientes/novo" class="btn btn-green">+ Cadastrar cliente</a>
+            <a href="/grupos" class="btn btn-purple">Gerenciar Grupos</a>
+        </div>
+
+        <!-- FORMULÁRIO DE FILTRO VIA QUERY STRING -->
+        <form action="/clientes" method="GET" class="search-box">
+            <input type="text" name="busca" placeholder="Buscar por cliente ou grupo..." value="<%= busca %>">
+            <button type="submit">Buscar</button>
+            <% if (busca) { %>
+                <a href="/clientes" style="margin-left: 5px; font-size: 13px; color: #6c757d;">Limpar filtro</a>
+            <% } %>
+        </form>
+    </div>
+
+    <!-- TABELA PRINCIPAL COM EXIBIÇÃO DA COLUNA RELACIONAL (DESCRICAO_GRUPO) -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do cliente</th>
+                <th>Grupo / Categoria (Tabela Relacionada)</th>
+                <th>cpf </th>
+                <th>email </th>
+                <th>Telefone</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (clientes.length === 0) { %>
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #888;">Nenhum cliente encontrado.</td>
+                </tr>
+            <% } else { %>
+                <!-- BLOCO EJS: Iteração sobre o array de clientes retornado pela consulta com LEFT JOIN -->
+                <% clientes.forEach(cliente => { %>
+                    <tr>
+                        <td><%= cliente.id %></td>
+                        <td><strong><%= cliente.nome_cliente %></strong></td>
+                        
+                        <!-- EXIBIÇÃO RELACIONAL: Exibe a descrição do grupo obtida via LEFT JOIN ou alerta se for nulo -->
+                        <td>
+                            <% if (cliente.descricao_grupo) { %>
+                                <span class="badge-grupo"><%= cliente.descricao_grupo %></span>
+                            <% } else { %>
+                                <span style="color: #999; font-style: italic;">Sem Grupo</span>
+                            <% } %>
+                        </td>
+
+                        <td><%= cliente.cpf %></td>
+                        <td><%= cliente.email %></td>
+                        <td><%= cliente.telefone %></td>
+                        <td>
+                            <a href="/clientes/editar/<%= cliente.id %>" class="btn btn-blue">Editar</a>
+                            <a href="/clientes/deletar/<%= cliente.id %>" class="btn btn-red" onclick="return confirm('Tem certeza que deseja excluir?')">Deletar</a>
+                        </td>
+                    </tr>
+                <% }); %>
+            <% } %>
+        </tbody>
+    </table>
+
+</body>
+</html>
